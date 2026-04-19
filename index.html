@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1a1a1a">
+    <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="衣柜">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
@@ -53,10 +53,11 @@
         <div class="clothes-grid" id="clothesGrid"></div>
         <div class="empty-state" id="emptyState" style="display:none;">
             <div class="empty-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round"><path d="M20.38 3.46L16 2 12 5.5 8 2l-4.38 1.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#e0e0e0" stroke-width="1.2" stroke-linecap="round"><path d="M20.38 3.46L16 2 12 5.5 8 2l-4.38 1.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>
             </div>
-            <p>衣柜还是空的</p>
-            <button class="btn-primary" onclick="openAddModal()">添加第一件衣服</button>
+            <p class="empty-title">衣柜还是空的</p>
+            <p class="empty-desc">点击右上角 + 添加你的第一件衣服</p>
+            <button class="btn-primary btn-empty" onclick="openAddModal()">开始添加</button>
         </div>
         <div class="loading" id="loading" style="display:none;"><div class="spinner"></div></div>
     </main>
@@ -69,11 +70,24 @@
             <div class="sheet-body">
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-placeholder" id="uploadPlaceholder">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                        <p>点击拍照或选择照片</p>
+                        <div class="upload-icon-wrap">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        </div>
+                        <p class="upload-title">添加照片</p>
+                        <p class="upload-hint">选择照片或直接拍照</p>
                     </div>
                     <img id="previewImg" class="preview-img" style="display:none;">
-                    <input type="file" id="fileInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)">
+                    <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+                </div>
+                <div class="upload-actions" id="uploadActions">
+                    <button class="upload-action-btn" onclick="pickFromAlbum()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        从相册选择
+                    </button>
+                    <button class="upload-action-btn" onclick="takePhoto()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        拍照
+                    </button>
                 </div>
                 <div class="form-group"><label>名称</label><input type="text" id="clothName" placeholder="如：白色T恤"></div>
                 <div class="form-row">

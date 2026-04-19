@@ -148,7 +148,11 @@ async function loadClothes() {
             return;
         }
 
-        clothes.forEach(item => grid.appendChild(createClothCard(item)));
+        clothes.forEach((item, index) => {
+            const card = createClothCard(item);
+            card.style.animationDelay = `${index * 0.05}s`;
+            grid.appendChild(card);
+        });
     } catch (e) {
         loading.style.display = 'none';
         showToast('加载失败');
@@ -217,6 +221,7 @@ function resetAddForm() {
     selectedBlob = null;
     document.getElementById('previewImg').style.display = 'none';
     document.getElementById('uploadPlaceholder').style.display = 'flex';
+    document.getElementById('uploadActions').style.display = 'flex';
     document.getElementById('clothName').value = '';
     document.getElementById('clothSeason').value = 'spring_autumn';
     document.getElementById('clothCategory').value = 'tops';
@@ -236,9 +241,27 @@ function setupUploadDragDrop() {
     });
 }
 
+// ===== Photo picking: album vs camera =====
+function pickFromAlbum() {
+    const input = document.getElementById('fileInput');
+    input.removeAttribute('capture');
+    input.accept = 'image/*';
+    input.click();
+}
+
+function takePhoto() {
+    const input = document.getElementById('fileInput');
+    input.setAttribute('capture', 'environment');
+    input.accept = 'image/*';
+    input.click();
+}
+
 function handleFileSelect(e) {
     const file = e.target.files[0];
     if (file) processFile(file);
+    // Reset capture so next click uses default behavior
+    const input = document.getElementById('fileInput');
+    input.removeAttribute('capture');
 }
 
 function processFile(file) {
@@ -248,6 +271,7 @@ function processFile(file) {
         document.getElementById('previewImg').src = e.target.result;
         document.getElementById('previewImg').style.display = 'block';
         document.getElementById('uploadPlaceholder').style.display = 'none';
+        document.getElementById('uploadActions').style.display = 'none';
     };
     reader.readAsDataURL(file);
 }
@@ -280,7 +304,7 @@ async function saveClothing() {
         closeAddModal();
         await loadClothes();
         await updateStats();
-        showToast('添加成功');
+        showToast('添加成功 ✨');
     } catch (e) {
         console.error('Save failed:', e);
         showToast('保存失败');
