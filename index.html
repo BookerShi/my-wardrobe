@@ -68,27 +68,34 @@
             <div class="sheet-handle"></div>
             <div class="sheet-header"><h2>添加衣服</h2><button class="sheet-close" onclick="closeAddModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
             <div class="sheet-body">
-                <div class="upload-area" id="uploadArea">
-                    <div class="upload-placeholder" id="uploadPlaceholder">
-                        <div class="upload-icon-wrap">
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                        </div>
-                        <p class="upload-title">添加照片</p>
-                        <p class="upload-hint">选择照片或直接拍照</p>
-                    </div>
-                    <img id="previewImg" class="preview-img" style="display:none;">
-                    <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
-                </div>
-                <div class="upload-actions" id="uploadActions">
+                <!-- Hidden file input - completely invisible -->
+                <input type="file" id="fileInput" accept="image/*" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;" onchange="handleFileSelect(event)">
+
+                <div class="upload-actions">
                     <button class="upload-action-btn" onclick="pickFromAlbum()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                        从相册选择
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        <span>从相册选择</span>
                     </button>
                     <button class="upload-action-btn" onclick="takePhoto()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                        拍照
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <span>拍照</span>
                     </button>
                 </div>
+
+                <div class="upload-preview-area" id="uploadPreviewArea" style="display:none;">
+                    <img id="previewImg" class="preview-img">
+                    <button class="preview-remove" onclick="removePreview()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+
+                <div class="upload-placeholder" id="uploadPlaceholder">
+                    <div class="upload-icon-wrap">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    </div>
+                    <p class="upload-hint">选择照片或拍照来添加衣服</p>
+                </div>
+
                 <div class="form-group"><label>名称</label><input type="text" id="clothName" placeholder="如：白色T恤"></div>
                 <div class="form-row">
                     <div class="form-group"><label>季节</label><select id="clothSeason"><option value="spring_autumn">春秋</option><option value="summer">夏</option><option value="winter">冬</option></select></div>

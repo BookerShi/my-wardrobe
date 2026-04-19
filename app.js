@@ -220,12 +220,21 @@ function resetAddForm() {
     selectedFile = null;
     selectedBlob = null;
     document.getElementById('previewImg').style.display = 'none';
+    document.getElementById('uploadPreviewArea').style.display = 'none';
     document.getElementById('uploadPlaceholder').style.display = 'flex';
-    document.getElementById('uploadActions').style.display = 'flex';
     document.getElementById('clothName').value = '';
     document.getElementById('clothSeason').value = 'spring_autumn';
     document.getElementById('clothCategory').value = 'tops';
     document.getElementById('clothColor').value = '';
+    document.getElementById('fileInput').value = '';
+}
+
+function removePreview() {
+    selectedFile = null;
+    selectedBlob = null;
+    document.getElementById('previewImg').style.display = 'none';
+    document.getElementById('uploadPreviewArea').style.display = 'none';
+    document.getElementById('uploadPlaceholder').style.display = 'flex';
     document.getElementById('fileInput').value = '';
 }
 
@@ -270,8 +279,8 @@ function processFile(file) {
     reader.onload = e => {
         document.getElementById('previewImg').src = e.target.result;
         document.getElementById('previewImg').style.display = 'block';
+        document.getElementById('uploadPreviewArea').style.display = 'flex';
         document.getElementById('uploadPlaceholder').style.display = 'none';
-        document.getElementById('uploadActions').style.display = 'none';
     };
     reader.readAsDataURL(file);
 }
