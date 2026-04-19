@@ -44,7 +44,7 @@ async function dbPut(item) {
     return new Promise((resolve, reject) => {
         const tx = d.transaction(STORE, 'readwrite');
         const req = tx.objectStore(STORE).put(item);
-        req.onsuccess = () => resolve(req.result);
+        req.onsuccess = () => resolve();
         req.onerror = () => reject(req.error);
     });
 }
@@ -113,58 +113,64 @@ async function loadClothes() {
 
     grid.innerHTML = '';
     empty.style.display = 'none';
-    loading.style.display = 'block';
+    loading.style.display = 'flex';
 
     try {
-        let clothes = await dbGetAll();
-
-        const category = document.getElementById('categoryFilter').value;
-        const search = document.getElementById('searchInput').value.trim().toLowerCase();
-
-        if (currentSeason !== 'all' && currentSeason !== 'favorites') {
-            clothes = clothes.filter(c => c.season === currentSeason);
-        }
-        if (currentSeason === 'favorites') {
-            clothes = clothes.filter(c => c.favorite);
-        }
-        if (category !== 'all') {
-            clothes = clothes.filter(c => c.category === category);
-        }
-        if (search) {
-            clothes = clothes.filter(c =>
-                (c.name || '').toLowerCase().includes(search) ||
-                (c.color || '').toLowerCase().includes(search)
-            );
-        }
-
-        // Sort newest first
-        clothes.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
-
-        allClothes = clothes;
-        loading.style.display = 'none';
-
-        if (clothes.length === 0) {
-            empty.style.display = 'block';
-            return;
-        }
-
-        clothes.forEach((item, index) => {
-            const card = createClothCard(item);
-            card.style.animationDelay = `${index * 0.05}s`;
-            grid.appendChild(card);
-        });
+        allClothes = await dbGetAll();
     } catch (e) {
         loading.style.display = 'none';
-        showToast('加载失败');
+        showToast('加载数据失败');
+        return;
     }
+
+    loading.style.display = 'none';
+
+    const search = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+    const category = document.getElementById('categoryFilter').value;
+
+    let filtered = allClothes;
+
+    // Season / favorites filter
+    if (currentSeason === 'favorites') {
+        filtered = filtered.filter(c => c.favorite);
+    } else if (currentSeason !== 'all') {
+        filtered = filtered.filter(c => c.season === currentSeason);
+    }
+
+    // Category filter
+    if (category !== 'all') {
+        filtered = filtered.filter(c => c.category === category);
+    }
+
+    // Search filter
+    if (search) {
+        filtered = filtered.filter(c =>
+            (c.name || '').toLowerCase().includes(search) ||
+            (c.color || '').toLowerCase().includes(search)
+        );
+    }
+
+    if (filtered.length === 0) {
+        empty.style.display = 'block';
+        return;
+    }
+
+    // Sort by created_at descending
+    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const fragment = document.createDocumentFragment();
+    filtered.forEach((item, index) => {
+        const card = createClothCard(item, index);
+        fragment.appendChild(card);
+    });
+    grid.appendChild(fragment);
 }
 
-async function updateStats() {
-    const clothes = await dbGetAll();
-    const total = clothes.length;
+function updateStats() {
+    const total = allClothes.length;
     const seasons = { spring_autumn: 0, summer: 0, winter: 0 };
     let favorites = 0;
-    clothes.forEach(c => {
+    allClothes.forEach(c => {
         if (seasons[c.season] !== undefined) seasons[c.season]++;
         if (c.favorite) favorites++;
     });
@@ -173,12 +179,14 @@ async function updateStats() {
     document.getElementById('count-summer').textContent = seasons.summer;
     document.getElementById('count-winter').textContent = seasons.winter;
     document.getElementById('count-favorites').textContent = favorites;
+    document.getElementById('headerCount').textContent = total + ' 件';
 }
 
 // ===== Card =====
-function createClothCard(item) {
+function createClothCard(item, index) {
     const card = document.createElement('div');
     card.className = 'cloth-card';
+    card.style.animationDelay = (index * 0.06) + 's';
     card.onclick = () => showDetail(item);
 
     const seasonLabel = SEASON_LABELS[item.season] || item.season;
@@ -191,13 +199,15 @@ function createClothCard(item) {
             <button class="card-action-btn ${item.favorite ? 'favorited' : ''}" onclick="event.stopPropagation(); toggleFavorite('${item.id}', ${!!item.favorite})" title="收藏">
                 ${item.favorite ? '❤️' : '🤍'}
             </button>
-            <button class="card-action-btn" onclick="event.stopPropagation(); confirmDelete('${item.id}')" title="删除">🗑️</button>
+            <button class="card-action-btn" onclick="event.stopPropagation(); deleteClothing('${item.id}')" title="删除">
+                🗑️
+            </button>
         </div>
         <div class="cloth-card-info">
             <div class="cloth-card-name">${escapeHtml(item.name)}</div>
             <div class="cloth-card-tags">
-                <span class="tag">${seasonLabel}</span>
-                <span class="tag">${categoryLabel}</span>
+                <span class="tag">${escapeHtml(seasonLabel)}</span>
+                <span class="tag">${escapeHtml(categoryLabel)}</span>
                 ${item.color ? `<span class="tag">${escapeHtml(item.color)}</span>` : ''}
             </div>
         </div>
@@ -205,10 +215,71 @@ function createClothCard(item) {
     return card;
 }
 
-// ===== Add Clothing =====
+// ===== Favorite =====
+async function toggleFavorite(id, isFav) {
+    try {
+        const item = await dbGet(id);
+        if (!item) return;
+        item.favorite = !isFav;
+        await dbPut(item);
+        await loadClothes();
+        updateStats();
+        showToast(item.favorite ? '已收藏' : '已取消收藏');
+    } catch (e) {
+        showToast('操作失败');
+    }
+}
+
+// ===== Delete =====
+async function deleteClothing(id) {
+    if (!confirm('确定要删除这件衣服吗？')) return;
+    try {
+        await dbDelete(id);
+        await loadClothes();
+        updateStats();
+        showToast('已删除');
+    } catch (e) {
+        showToast('删除失败');
+    }
+}
+
+// ===== Detail =====
+function showDetail(item) {
+    currentDetailId = item.id;
+    document.getElementById('detailTitle').textContent = item.name || '详情';
+    document.getElementById('detailImg').src = item.imageData || '';
+    document.getElementById('detailName').textContent = item.name || '-';
+    document.getElementById('detailSeason').textContent = SEASON_LABELS[item.season] || item.season || '-';
+    document.getElementById('detailCategory').textContent = CATEGORY_LABELS[item.category] || item.category || '-';
+    document.getElementById('detailColor').textContent = item.color || '-';
+    const date = item.created_at ? new Date(item.created_at).toLocaleDateString('zh-CN') : '-';
+    document.getElementById('detailDate').textContent = date;
+    document.getElementById('detailModal').classList.add('show');
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').classList.remove('show');
+    currentDetailId = null;
+}
+
+async function deleteFromDetail() {
+    if (!currentDetailId) return;
+    if (!confirm('确定要删除这件衣服吗？')) return;
+    try {
+        await dbDelete(currentDetailId);
+        closeDetailModal();
+        await loadClothes();
+        updateStats();
+        showToast('已删除');
+    } catch (e) {
+        showToast('删除失败');
+    }
+}
+
+// ===== Add Modal =====
 function openAddModal() {
-    document.getElementById('addModal').classList.add('show');
     resetAddForm();
+    document.getElementById('addModal').classList.add('show');
 }
 
 function closeAddModal() {
@@ -240,6 +311,7 @@ function removePreview() {
 
 function setupUploadDragDrop() {
     const area = document.getElementById('uploadArea');
+    if (!area) return;
     area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('dragover'); });
     area.addEventListener('dragleave', () => area.classList.remove('dragover'));
     area.addEventListener('drop', e => {
@@ -312,110 +384,47 @@ async function saveClothing() {
         await dbPut(item);
         closeAddModal();
         await loadClothes();
-        await updateStats();
-        showToast('添加成功 ✨');
+        updateStats();
+        showToast('添加成功');
     } catch (e) {
         console.error('Save failed:', e);
-        showToast('保存失败');
+        showToast('保存失败，请重试');
     } finally {
         btn.disabled = false;
         btn.textContent = '保存';
     }
 }
 
-function compressImage(file, maxW, quality) {
+function compressImage(file, maxSize, quality) {
     return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let w = img.width, h = img.height;
-            if (w > maxW) { h = h * maxW / w; w = maxW; }
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', quality));
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
+                if (w > maxSize || h > maxSize) {
+                    if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+                    else { w = Math.round(w * maxSize / h); h = maxSize; }
+                }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
         };
-        img.onerror = reject;
-        img.src = URL.createObjectURL(file);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
     });
-}
-
-// ===== Favorite & Delete =====
-async function toggleFavorite(id, current) {
-    try {
-        const item = await dbGet(id);
-        if (!item) return;
-        item.favorite = !current;
-        await dbPut(item);
-        await loadClothes();
-        await updateStats();
-    } catch (e) {
-        showToast('操作失败');
-    }
-}
-
-function confirmDelete(id) {
-    if (confirm('确定要删除这件衣服吗？')) {
-        deleteClothing(id);
-    }
-}
-
-async function deleteClothing(id) {
-    try {
-        await dbDelete(id);
-        await loadClothes();
-        await updateStats();
-        showToast('已删除');
-        // Close detail modal if open
-        if (currentDetailId === id) closeDetailModal();
-    } catch (e) {
-        showToast('删除失败');
-    }
-}
-
-// ===== Detail =====
-async function showDetail(item) {
-    currentDetailId = item.id;
-    document.getElementById('detailTitle').textContent = item.name || '详情';
-    document.getElementById('detailImg').src = item.imageData || '';
-    document.getElementById('detailName').textContent = item.name || '-';
-    document.getElementById('detailSeason').textContent = SEASON_LABELS[item.season] || item.season || '-';
-    document.getElementById('detailCategory').textContent = CATEGORY_LABELS[item.category] || item.category || '-';
-    document.getElementById('detailColor').textContent = item.color || '-';
-    document.getElementById('detailDate').textContent = formatDate(item.created_at);
-    document.getElementById('detailDeleteBtn').onclick = () => {
-        if (confirm('确定要删除这件衣服吗？')) {
-            deleteClothing(item.id);
-        }
-    };
-    document.getElementById('detailModal').classList.add('show');
-}
-
-function closeDetailModal() {
-    document.getElementById('detailModal').classList.remove('show');
-    currentDetailId = null;
-}
-
-function deleteFromDetail() {
-    if (currentDetailId) {
-        if (confirm('确定要删除这件衣服吗？')) {
-            deleteClothing(currentDetailId);
-            closeDetailModal();
-        }
-    }
-}
-
-function formatDate(iso) {
-    if (!iso) return '-';
-    const d = new Date(iso);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 // ===== Match Mode =====
 function openMatchMode() {
-    matchSlots = { tops: null, bottoms: null, outerwear: null, shoes: null };
     currentMatchSlot = null;
+    document.querySelectorAll('.match-slot').forEach(s => s.classList.remove('active-slot'));
     document.getElementById('matchModal').classList.add('show');
     updateMatchSlots();
     loadMatchClothes();
@@ -428,7 +437,8 @@ function closeMatchModal() {
 function pickForSlot(slot) {
     currentMatchSlot = slot;
     document.querySelectorAll('.match-slot').forEach(s => s.classList.remove('active-slot'));
-    document.querySelector(`.match-slot[data-slot="${slot}"]`).classList.add('active-slot');
+    const slotEl = document.querySelector(`.match-slot[data-slot="${slot}"]`);
+    if (slotEl) slotEl.classList.add('active-slot');
     loadMatchClothes();
 }
 
@@ -436,57 +446,75 @@ async function loadMatchClothes() {
     const grid = document.getElementById('matchGrid');
     grid.innerHTML = '';
 
-    let clothes = await dbGetAll();
+    try {
+        const clothes = await dbGetAll();
+        const seasonFilter = document.getElementById('matchSeasonFilter').value;
+        const categoryFilter = document.getElementById('matchCategoryFilter').value;
 
-    if (currentMatchSlot) {
-        // Only show items matching the slot category
-        const catMap = { tops: 'tops', bottoms: 'bottoms', outerwear: 'outerwear', shoes: 'shoes' };
-        const targetCat = catMap[currentMatchSlot];
-        clothes = clothes.filter(c => c.category === targetCat);
+        let filtered = clothes;
+        if (seasonFilter !== 'all') {
+            filtered = filtered.filter(c => c.season === seasonFilter);
+        }
+        if (categoryFilter !== 'all') {
+            filtered = filtered.filter(c => c.category === categoryFilter);
+        }
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:30px;grid-column:1/-1;">暂无符合条件的衣服</p>';
+            return;
+        }
+
+        filtered.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'match-item';
+            if (currentMatchSlot && matchSlots[currentMatchSlot] === item.id) {
+                div.classList.add('selected');
+            }
+            div.innerHTML = `<img src="${item.imageData || ''}" alt="${escapeHtml(item.name)}" loading="lazy">`;
+            div.onclick = () => {
+                if (!currentMatchSlot) { showToast('请先选择一个搭配位'); return; }
+                matchSlots[currentMatchSlot] = item.id;
+                updateMatchSlots();
+                loadMatchClothes();
+            };
+            grid.appendChild(div);
+        });
+    } catch (e) {
+        showToast('加载失败');
     }
-
-    const seasonFilter = document.getElementById('matchSeasonFilter').value;
-    const catFilter = document.getElementById('matchCategoryFilter').value;
-    if (seasonFilter !== 'all') clothes = clothes.filter(c => c.season === seasonFilter);
-    if (catFilter !== 'all') clothes = clothes.filter(c => c.category === catFilter);
-
-    clothes.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'match-item' + (isInMatchSlots(item.id) ? ' selected' : '');
-        div.innerHTML = `<img src="${item.imageData}" alt="${escapeHtml(item.name)}" loading="lazy">`;
-        div.onclick = () => selectForMatch(item);
-        grid.appendChild(div);
-    });
-}
-
-function isInMatchSlots(id) {
-    return Object.values(matchSlots).some(s => s && s.id === id);
-}
-
-function selectForMatch(item) {
-    if (!currentMatchSlot) return;
-    matchSlots[currentMatchSlot] = item;
-    updateMatchSlots();
-    loadMatchClothes();
 }
 
 function updateMatchSlots() {
-    for (const [slot, item] of Object.entries(matchSlots)) {
-        const img = document.getElementById(`match-${slot}`);
-        const ph = document.getElementById(`match-${slot}-ph`);
-        const slotEl = document.querySelector(`.match-slot[data-slot="${slot}"]`);
-
-        if (item) {
-            img.src = item.imageData;
-            img.style.display = 'block';
-            ph.style.display = 'none';
-            slotEl.classList.add('filled');
+    const slotTypes = ['tops', 'bottoms', 'outerwear', 'shoes'];
+    slotTypes.forEach(async type => {
+        const img = document.getElementById(`match-${type}`);
+        const ph = document.getElementById(`match-${type}-ph`);
+        const slotEl = document.querySelector(`.match-slot[data-slot="${type}"]`);
+        const itemId = matchSlots[type];
+        if (itemId) {
+            try {
+                const item = await dbGet(itemId);
+                if (item && item.imageData) {
+                    img.src = item.imageData;
+                    img.style.display = 'block';
+                    ph.style.display = 'none';
+                    slotEl.classList.add('filled');
+                } else {
+                    img.style.display = 'none';
+                    ph.style.display = 'block';
+                    slotEl.classList.remove('filled');
+                }
+            } catch (e) {
+                img.style.display = 'none';
+                ph.style.display = 'block';
+                slotEl.classList.remove('filled');
+            }
         } else {
             img.style.display = 'none';
             ph.style.display = 'block';
             slotEl.classList.remove('filled');
         }
-    }
+    });
 }
 
 function clearMatch() {
