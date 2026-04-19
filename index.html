@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#0f0f1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="衣柜">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
@@ -13,51 +13,63 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+    <!-- Animated background -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
     <header class="header">
-        <h1 class="header-title">我的衣柜</h1>
-        <button class="header-add" onclick="openAddModal()">
+        <div class="header-left">
+            <h1 class="header-title">我的衣柜</h1>
+            <span class="header-count" id="headerCount">0 件</span>
+        </div>
+        <button class="header-add" onclick="openAddModal()" aria-label="添加衣服">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
     </header>
 
-    <div class="tabs" id="seasonTabs">
+    <nav class="tabs" id="seasonTabs">
         <button class="tab active" data-season="all">全部<span class="tab-count" id="count-all">0</span></button>
         <button class="tab" data-season="spring_autumn">春秋<span class="tab-count" id="count-spring_autumn">0</span></button>
         <button class="tab" data-season="summer">夏<span class="tab-count" id="count-summer">0</span></button>
         <button class="tab" data-season="winter">冬<span class="tab-count" id="count-winter">0</span></button>
-        <button class="tab" data-season="favorites">收藏<span class="tab-count" id="count-favorites">0</span></button>
-    </div>
+        <button class="tab" data-season="favorites">❤️<span class="tab-count" id="count-favorites">0</span></button>
+    </nav>
 
     <div class="filter-bar">
         <div class="search-wrap">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="searchInput" placeholder="搜索名称或颜色" oninput="debounceSearch()">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" placeholder="搜索名称或颜色..." oninput="debounceSearch()">
         </div>
-        <select id="categoryFilter" onchange="loadClothes()">
-            <option value="all">全部类型</option>
-            <option value="tops">上装</option>
-            <option value="bottoms">下装</option>
-            <option value="dresses">连衣裙</option>
-            <option value="outerwear">外套</option>
-            <option value="shoes">鞋子</option>
-            <option value="bags">包包</option>
-            <option value="accessories">配饰</option>
-        </select>
-        <button class="btn-match" onclick="openMatchMode()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            搭配
-        </button>
+        <div class="filter-actions">
+            <select id="categoryFilter" onchange="loadClothes()">
+                <option value="all">全部类型</option>
+                <option value="tops">上装</option>
+                <option value="bottoms">下装</option>
+                <option value="dresses">连衣裙</option>
+                <option value="outerwear">外套</option>
+                <option value="shoes">鞋子</option>
+                <option value="bags">包包</option>
+                <option value="accessories">配饰</option>
+            </select>
+            <button class="btn-match" onclick="openMatchMode()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                搭配
+            </button>
+        </div>
     </div>
 
     <main class="main">
         <div class="clothes-grid" id="clothesGrid"></div>
         <div class="empty-state" id="emptyState" style="display:none;">
             <div class="empty-icon">
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#e0e0e0" stroke-width="1.2" stroke-linecap="round"><path d="M20.38 3.46L16 2 12 5.5 8 2l-4.38 1.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.3"><path d="M20.38 3.46L16 2 12 5.5 8 2l-4.38 1.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>
             </div>
             <p class="empty-title">衣柜还是空的</p>
             <p class="empty-desc">点击右上角 + 添加你的第一件衣服</p>
-            <button class="btn-primary btn-empty" onclick="openAddModal()">开始添加</button>
+            <button class="btn-primary btn-empty" onclick="openAddModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                开始添加
+            </button>
         </div>
         <div class="loading" id="loading" style="display:none;"><div class="spinner"></div></div>
     </main>
@@ -66,34 +78,43 @@
     <div class="overlay" id="addModal">
         <div class="sheet">
             <div class="sheet-handle"></div>
-            <div class="sheet-header"><h2>添加衣服</h2><button class="sheet-close" onclick="closeAddModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+            <div class="sheet-header">
+                <h2>添加衣服</h2>
+                <button class="sheet-close" onclick="closeAddModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
             <div class="sheet-body">
-                <!-- Hidden file input - completely invisible -->
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-placeholder" id="uploadPlaceholder">
+                        <div class="upload-icon-wrap">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        </div>
+                        <p class="upload-title">添加照片</p>
+                        <p class="upload-hint">选择照片或直接拍照</p>
+                    </div>
+                    <div class="upload-preview-area" id="uploadPreviewArea" style="display:none;">
+                        <img id="previewImg" class="preview-img">
+                        <button class="preview-remove" onclick="removePreview()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
                 <input type="file" id="fileInput" accept="image/*" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;" onchange="handleFileSelect(event)">
 
-                <div class="upload-actions">
+                <div class="upload-actions" id="uploadActions">
                     <button class="upload-action-btn" onclick="pickFromAlbum()">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        <div class="upload-action-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        </div>
                         <span>从相册选择</span>
                     </button>
                     <button class="upload-action-btn" onclick="takePhoto()">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <div class="upload-action-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        </div>
                         <span>拍照</span>
                     </button>
-                </div>
-
-                <div class="upload-preview-area" id="uploadPreviewArea" style="display:none;">
-                    <img id="previewImg" class="preview-img">
-                    <button class="preview-remove" onclick="removePreview()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
-                </div>
-
-                <div class="upload-placeholder" id="uploadPlaceholder">
-                    <div class="upload-icon-wrap">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                    </div>
-                    <p class="upload-hint">选择照片或拍照来添加衣服</p>
                 </div>
 
                 <div class="form-group"><label>名称</label><input type="text" id="clothName" placeholder="如：白色T恤"></div>
@@ -103,7 +124,10 @@
                 </div>
                 <div class="form-group"><label>颜色</label><input type="text" id="clothColor" placeholder="如：白色、黑色"></div>
             </div>
-            <div class="sheet-footer"><button class="btn-secondary" onclick="closeAddModal()">取消</button><button class="btn-primary" id="saveBtn" onclick="saveClothing()">保存</button></div>
+            <div class="sheet-footer">
+                <button class="btn-secondary" onclick="closeAddModal()">取消</button>
+                <button class="btn-primary" id="saveBtn" onclick="saveClothing()">保存</button>
+            </div>
         </div>
     </div>
 
@@ -111,7 +135,12 @@
     <div class="overlay" id="matchModal">
         <div class="sheet sheet-full">
             <div class="sheet-handle"></div>
-            <div class="sheet-header"><h2>搭配模式</h2><button class="sheet-close" onclick="closeMatchModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+            <div class="sheet-header">
+                <h2>搭配模式</h2>
+                <button class="sheet-close" onclick="closeMatchModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
             <div class="sheet-body">
                 <div class="match-palette">
                     <div class="match-slot" data-slot="tops" onclick="pickForSlot('tops')"><img id="match-tops" class="slot-img" style="display:none;"><span class="slot-placeholder" id="match-tops-ph">上装</span></div>
@@ -125,7 +154,10 @@
                 </div>
                 <div class="match-grid" id="matchGrid"></div>
             </div>
-            <div class="sheet-footer"><button class="btn-secondary" onclick="clearMatch()">清空</button><button class="btn-primary" onclick="closeMatchModal()">完成</button></div>
+            <div class="sheet-footer">
+                <button class="btn-secondary" onclick="clearMatch()">清空</button>
+                <button class="btn-primary" onclick="closeMatchModal()">完成</button>
+            </div>
         </div>
     </div>
 
@@ -133,7 +165,12 @@
     <div class="overlay" id="detailModal">
         <div class="sheet">
             <div class="sheet-handle"></div>
-            <div class="sheet-header"><h2 id="detailTitle">详情</h2><button class="sheet-close" onclick="closeDetailModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+            <div class="sheet-header">
+                <h2 id="detailTitle">详情</h2>
+                <button class="sheet-close" onclick="closeDetailModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
             <div class="sheet-body">
                 <img id="detailImg" class="detail-img">
                 <div class="detail-info">
@@ -144,7 +181,10 @@
                     <div class="detail-row"><span>添加时间</span><span id="detailDate"></span></div>
                 </div>
             </div>
-            <div class="sheet-footer"><button class="btn-danger" id="detailDeleteBtn" onclick="deleteFromDetail()">删除</button><button class="btn-secondary" onclick="closeDetailModal()">关闭</button></div>
+            <div class="sheet-footer">
+                <button class="btn-danger" id="detailDeleteBtn" onclick="deleteFromDetail()">删除</button>
+                <button class="btn-secondary" onclick="closeDetailModal()">关闭</button>
+            </div>
         </div>
     </div>
 

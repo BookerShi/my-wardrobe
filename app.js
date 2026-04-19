@@ -397,6 +397,15 @@ function closeDetailModal() {
     currentDetailId = null;
 }
 
+function deleteFromDetail() {
+    if (currentDetailId) {
+        if (confirm('确定要删除这件衣服吗？')) {
+            deleteClothing(currentDetailId);
+            closeDetailModal();
+        }
+    }
+}
+
 function formatDate(iso) {
     if (!iso) return '-';
     const d = new Date(iso);

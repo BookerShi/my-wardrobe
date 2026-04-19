@@ -4,8 +4,8 @@
   "description": "电子衣柜 - 轻松管理你的所有衣服",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#f7f7f8",
-  "theme_color": "#1a1a1a",
+  "background_color": "#0f0f1a",
+  "theme_color": "#0f0f1a",
   "orientation": "portrait",
   "icons": [
     {
